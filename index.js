@@ -30,9 +30,31 @@ async function run (){
 
      const db = client.db('smart_db');
      const productsCollection = db.collection ('products')
+     const bidsCollection = db.collection('bids');
+     const usersCollection = db.collection('users');
+
+
+     app.post('/users', async (req, res)=>{
+      const newUser = req.body;
+     
+      const query= {email: newUser.email}
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser){
+          res.send({message: 'User already exists. Don not need to register again!'})
+      }
+      else{
+          const result= await usersCollection.insertOne(newUser)
+        res.send(result)
+      }
+
+
+
+   
+     })
 
     app.get('/products', async (req, res) => {
-       const cursor = productsCollection.find();
+    //    const cursor = productsCollection.find().sort({price_min: 1}).skip(5).limit(5);
+    const cursor = productsCollection.find();
        const result = await cursor.toArray()
         res.send(result)
      })
@@ -70,9 +92,32 @@ async function run (){
      app.delete('/products/:id', async (req, res)=> {
         const id = req.params.id;
         const query = { _id: new ObjectId(id)}
-            const result= await productsCollection.deleteOne(query)
+         const result= await productsCollection.deleteOne(query)
         res.send(result);
      })
+    //  bids rwlated api
+
+    app.get('/bids', async  (req, res)=> {
+        const email = req.query.email;
+        const query={};
+        if (email){
+            query.buyer_email = email;
+        }
+
+        const cursor = bidsCollection.find(query)
+        const result = await cursor.toArray()
+        res.send(result);
+     })
+
+      
+     app.post('/bids', async (req, res) => {
+        const newBid = req.body;
+        const result = await bidsCollection.insertOne(newBid)
+        res.send(result)
+     }) 
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
