@@ -6,9 +6,62 @@ const app = express()
 const port = process.env.PORT || 3000;
 console.log(process.env)
 
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./smart-deals-firebase-adminsdk.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 // middleware
 app.use(cors());
 app.use(express.json())
+
+const logger = (req, res, next)=> {
+  console.log('logging info')
+  next()
+}
+// const verifyFireBaseToken = (req, res, next) => {
+//   console.log('Authorization header:', req.headers.authorization);
+  
+//   // TEMPORARY: Skip authentication for testing
+//   console.log('⚠️ TEMPORARILY SKIPPING AUTH FOR TESTING');
+//   next();
+  
+//   // Comment out the actual authentication for now:
+//   /*
+//   if (!req.headers.authorization) {
+//     return res.status(401).send({ message: 'unauthorized access' });
+//   }
+//   // ... rest of your auth code
+//   */
+// };
+
+const verifyFireBaseToken = async (req, res, next)=> {
+  console.log('in the middleware', req.headers.authorization)
+  if(!req.headers.authorization){
+    // do not allow to go
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  const token = req.headers.authorization.split(' ')[1];
+  if(!token){
+    // do not allow to go
+    return res.status(401).send({message: 'unauthorized access'})
+  } 
+  try {
+    const userInfo= await admin.auth().verifyIdToken(token);
+     console.log('after token validation', userInfo)
+     next()
+  }
+   catch {
+        return res.status(401).send({message: 'unauthorized access'})
+
+   }
+  // verify token
+  // next()
+}
 
 // const uri = "mongodb+srv://SmartDbUser:YfsVErx8Q5F6vDZ3@cluster0.a0a09os.mongodb.net/?appName=Cluster0";
 
@@ -75,7 +128,7 @@ async function run (){
 
      })
 
-     app.post('/products', async (req, res) => {
+     app.post('/products', verifyFireBaseToken, async (req, res) => {
         const newProduct = req.body;
         const result = await productsCollection.insertOne(newProduct)
         res.send(result)
@@ -106,7 +159,8 @@ async function run (){
 
     //  bids rwlated api
 
-    app.get('/bids', async  (req, res)=> {
+    app.get('/bids', logger, verifyFireBaseToken, async  (req, res)=> {
+      // console.log('headers', req.headers)
         const email = req.query.email;
         const query={};
         if (email){
@@ -126,7 +180,7 @@ async function run (){
         res.send(result)
      }) 
     
-     app.get('/products/bids/:productId', async (req, res)=> {
+     app.get('/products/bids/:productId', verifyFireBaseToken, async (req, res)=> {
         const productId = req.params.productId;
         const query = { product: productId}
         const cursor = bidsCollection.find(query).sort({bid_price: -1})
