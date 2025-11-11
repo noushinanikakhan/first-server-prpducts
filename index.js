@@ -6,14 +6,18 @@ const app = express()
 const port = process.env.PORT || 3000;
 console.log(process.env)
 
+
+
 const admin = require("firebase-admin");
 
 // index.js
-// const decoded = Buffer.from(process.env.FIREBASE_SERVICE_key, "base64").toString("utf8");
-// const serviceAccount = JSON.parse(decoded);
+const decoded = Buffer.from(process.env.FIREBASE_SERVICE_key, "base64").toString("utf8");
+const serviceAccount = JSON.parse(decoded);
 
-// Store the actual JSON in environment variable (no base64)
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_JSON);
+// // Store the actual JSON in environment variable (no base64)
+// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_JSON);
+
+FIREBASE_SERVICE_key
 
 
 admin.initializeApp({
