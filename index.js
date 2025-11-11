@@ -8,7 +8,13 @@ console.log(process.env)
 
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./smart-deals-firebase-adminsdk.json");
+// index.js
+// const decoded = Buffer.from(process.env.FIREBASE_SERVICE_key, "base64").toString("utf8");
+// const serviceAccount = JSON.parse(decoded);
+
+// Store the actual JSON in environment variable (no base64)
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_JSON);
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -208,8 +214,8 @@ async function run (){
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
 
   } finally {
